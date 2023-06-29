@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: openspeedtest
+  name: openspeedtest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openspeedtest
+  template:
+    metadata:
+      labels:
+        lbtype: external
+        app: openspeedtest
+    spec:
+      containers:
+      - image: openspeedtest/latest
+        name: openspeedtest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: speedtest
+        resources: {}
+      restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: openspeedtest
+  name: openspeedtest
+spec:
+  ports:
+  - name: "speedtest"
+    port: 8080
+    targetPort: "speedtest"
+  selector:
+    app: openspeedtest
+status:
+  loadBalancer: {}

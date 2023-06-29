@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: kumauptime
+  name: kumauptime
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kumauptime
+  template:
+    metadata:
+      labels:
+        app: kumauptime
+        lbtype: external
+    spec:
+      containers:
+        - image: louislam/uptime-kuma:1
+          imagePullPolicy: Always
+          name: kumauptime
+          ports:
+            - containerPort: 3001
+              name: kuma-port
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /app/data
+              name: kuma-claim0
+      restartPolicy: Always
+      volumes:
+        - name: kuma-claim0
+          persistentVolumeClaim:
+            claimName: kuma-claim0
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: kuma-claim0
+  name: kuma-claim0
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1000Mi
+

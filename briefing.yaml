@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: briefing
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: buildrunbriefing
+  namespace: briefing
+data:
+  runme.sh: |
+    apk add git
+    mkdir /app
+    cd /app
+    git clone https://github.com/holtwick/briefing.git
+    cd briefing
+    npm install
+    npm run start
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: briefing
+  name: briefing
+  namespace: briefing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: briefing
+  template:
+    metadata:
+      labels:
+        lbtype: external
+        app: briefing
+    spec:
+      containers:
+      - name: briefing
+        resources: {}
+        image: node:current-alpine
+        ports:
+        - containerPort: 8080
+          name: http-briefing
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 1
+        volumeMounts:
+        - mountPath: /scripts
+          name: buildrunbriefing-volume
+        command: ["/bin/sh", "/scripts/runme.sh"]
+      volumes:
+      - name: buildrunbriefing-volume
+        configMap:
+          name: buildrunbriefing
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: briefing
+  namespace: briefing
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: http-briefing
+  selector:
+    app: briefing
+  sessionAffinity: None
+  type: LoadBalancer
+

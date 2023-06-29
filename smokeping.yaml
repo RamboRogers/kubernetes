@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  creationTimestamp: null
+  labels:
+    monitoring.service: smokeping
+  name: smokeping
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      monitoring.service: smokeping
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+      creationTimestamp: null
+      labels:
+        monitoring.service: smokeping
+        app: smokeping
+        lbtype: external
+    spec:
+      containers:
+        - env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: America/New_York
+          image: linuxserver/smokeping
+          imagePullPolicy: Always
+          name: smokeping
+          ports:
+            - containerPort: 80
+              name: "http-smoke"
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - mountPath: /config
+              name: smokeping-claim0
+            - mountPath: /data
+              name: smokeping-claim1
+      restartPolicy: Always
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 1.1.1.1
+      volumes:
+        - name: smokeping-claim0
+          persistentVolumeClaim:
+            claimName: smokeping-claim0
+        - name: smokeping-claim1
+          persistentVolumeClaim:
+            claimName: smokeping-claim1
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+  creationTimestamp: null
+  labels:
+    monitoring.service: smokeping
+  name: smokeping
+spec:
+  ports:
+    - name: "smokeping"
+      port: 80
+      targetPort: 80
+  selector:
+    app: smokeping
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  creationTimestamp: null
+  labels:
+    monitoring.service: smokeping-claim0
+  name: smokeping-claim0
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  creationTimestamp: null
+  labels:
+    monitoring.service: smokeping-claim1
+  name: smokeping-claim1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}

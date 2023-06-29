@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: etherpad
+  name: etherpad
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etherpad
+  template:
+    metadata:
+      labels:
+        lbtype: external
+        app: etherpad
+    spec:
+      containers:
+      - image: etherpad/etherpad
+        name: etherpad
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9001
+          name: ether-port
+        resources: {}
+      restartPolicy: Always
+status: {}
