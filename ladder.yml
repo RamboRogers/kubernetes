@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: ladder
+  name: ladder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ladder
+  template:
+    metadata:
+      labels:
+        lbtype: external
+        app: ladder
+    spec:
+      containers:
+      - image: ghcr.io/kubero-dev/ladder:latest
+        name: ladder
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: ladder
+        resources: {}
+      restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ladder
+  name: ladder
+spec:
+  ports:
+  - name: "ladder"
+    port: 8787
+    targetPort: "ladder"
+  selector:
+    app: ladder
+status:
+  loadBalancer: {}
